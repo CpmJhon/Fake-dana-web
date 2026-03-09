@@ -11,6 +11,7 @@ let currentBlob = null;
 
 // Format Rupiah dengan titik
 function formatRupiah(angka) {
+    if (!angka) return '';
     let numberString = angka.replace(/[^,\d]/g, '').toString();
     let split = numberString.split(',');
     let sisa = split[0].length % 3;
@@ -79,8 +80,14 @@ async function handleGenerate() {
     resultSection.classList.remove('show');
 
     try {
-        // Call API endpoint (sesuai dengan struktur asli Anda)
-        const response = await fetch('/api/generate', {
+        // Determine API URL (relative or absolute)
+        const apiUrl = '/api/generate.php'; // Gunakan .php karena kita pakai PHP
+        
+        console.log('Mengirim request ke:', apiUrl);
+        console.log('Data:', { angka: rawNumber });
+        
+        // Call API endpoint
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -88,23 +95,54 @@ async function handleGenerate() {
             body: JSON.stringify({ angka: rawNumber })
         });
 
+        console.log('Response status:', response.status);
+        
+        // Cek apakah response OK
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Gagal generate gambar');
+            const text = await response.text();
+            console.error('Response text:', text);
+            throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
         }
 
-        // Get blob from response
-        const blob = await response.blob();
-        currentBlob = blob;
+        // Parse JSON response
+        const data = await response.json();
+        console.log('Response data:', data);
         
-        // Display image
-        const imageUrl = URL.createObjectURL(blob);
-        resultImage.src = imageUrl;
-        resultSection.classList.add('show');
+        // Cek success flag
+        if (!data.success) {
+            throw new Error(data.error || 'Gagal generate gambar');
+        }
+        
+        // Check if image exists
+        if (!data.image) {
+            throw new Error('Data gambar tidak ditemukan dalam response');
+        }
+        
+        // Konversi base64 ke blob
+        try {
+            const binaryString = atob(data.image);
+            const bytes = new Uint8Array(binaryString.length);
+            
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            
+            const blob = new Blob([bytes], { type: 'image/png' });
+            currentBlob = blob;
+            
+            // Tampilkan gambar
+            const imageUrl = URL.createObjectURL(blob);
+            resultImage.src = imageUrl;
+            resultSection.classList.add('show');
+            
+        } catch (e) {
+            console.error('Base64 decode error:', e);
+            throw new Error('Gagal memproses gambar');
+        }
         
     } catch (error) {
-        showError('⚠ ' + error.message);
         console.error('Generate error:', error);
+        showError('⚠ ' + error.message);
     } finally {
         // Remove loading state
         generateBtn.classList.remove('loading');
@@ -114,24 +152,32 @@ async function handleGenerate() {
 
 // Handle Download button
 function handleDownload() {
-    if (!currentBlob) return;
+    if (!currentBlob) {
+        showError('Tidak ada gambar untuk di-download');
+        return;
+    }
     
-    const url = URL.createObjectURL(currentBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    
-    // Filename based on nominal
-    const nominal = input.value.replace(/\./g, '') || 'dana';
-    a.download = `dana-${nominal}.png`;
-    
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    
-    // Cleanup
-    setTimeout(() => {
-        URL.revokeObjectURL(url);
-    }, 100);
+    try {
+        const url = URL.createObjectURL(currentBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        
+        // Filename based on nominal
+        const nominal = input.value.replace(/\./g, '') || 'dana';
+        a.download = `dana-${nominal}.png`;
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        // Cleanup
+        setTimeout(() => {
+            URL.revokeObjectURL(url);
+        }, 100);
+    } catch (error) {
+        console.error('Download error:', error);
+        showError('⚠ Gagal download: ' + error.message);
+    }
 }
 
 // Handle Reset button
@@ -157,7 +203,7 @@ resetBtn.addEventListener('click', handleReset);
 
 // Cleanup on page unload
 window.addEventListener('beforeunload', function() {
-    if (currentBlob) {
+    if (resultImage.src && resultImage.src.startsWith('blob:')) {
         URL.revokeObjectURL(resultImage.src);
     }
 });
