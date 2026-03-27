@@ -195,7 +195,7 @@ absensi.jhonproduction.com
 # 📸 Preview UI
 
 <p align="center">
-  <img src="https://o.uguu.se/THjihSpH.jpg" />
+  <img src="https://n.uguu.se/bRvTtKbg.jpg" />
 </p>
 
 ---
