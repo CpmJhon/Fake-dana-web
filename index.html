@@ -46,13 +46,18 @@
         </div>
         <div style="flex:1; text-align: center;">
           <p>Preview Foto</p>
-          <img id="photoPreview" class="photo-preview" style="width:150px; height:150px; object-fit:cover; background:#ddd;" alt="Preview">
+          <img id="photoPreview" class="photo-preview" style="width:150px; height:150px; object-fit:cover; background:#ddd; border-radius: 12px;" alt="Preview">
         </div>
       </div>
     </div>
+    
     <div id="uploadArea" style="margin-top: 12px;">
-      <input type="file" id="uploadPhotoInput" accept="image/*" capture="environment" style="display:none;">
-      <button id="uploadFileBtn" class="btn-outline"><i class="fas fa-upload"></i> Upload Foto (alternatif)</button>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button id="cameraBtn" class="btn-primary"><i class="fas fa-camera"></i> Buka Kamera</button>
+        <button id="galleryBtn" class="btn-outline"><i class="fas fa-images"></i> Pilih dari Galeri</button>
+        <input type="file" id="uploadPhotoInput" accept="image/*" style="display:none;">
+      </div>
+      <div id="photoInfo" style="margin-top: 10px; font-size: 12px; color: #6b7280;"></div>
     </div>
     <div id="attendanceMsg" style="margin-top: 16px; font-weight: 500;"></div>
   </div>
@@ -71,7 +76,16 @@
     <div class="table-wrapper">
       <table id="attendanceTable">
         <thead>
-          <tr><th>Nama</th><th>Tanggal</th><th>Jam Masuk</th><th>Jam Pulang</th><th>Durasi</th><th>Foto Masuk</th><th>Foto Pulang</th><th style="width:80px">Aksi</th></tr>
+          <tr>
+            <th>Nama</th>
+            <th>Tanggal</th>
+            <th>Jam Masuk</th>
+            <th>Jam Pulang</th>
+            <th>Durasi</th>
+            <th>Foto Masuk</th>
+            <th>Foto Pulang</th>
+            <th style="width:80px">Aksi</th>
+          </tr>
         </thead>
         <tbody id="tableBody">
           <tr><td colspan="8" style="text-align:center">Memuat data...</td></tr>

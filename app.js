@@ -22,7 +22,8 @@ const video = document.getElementById('video');
 const photoPreview = document.getElementById('photoPreview');
 const capturePhotoBtn = document.getElementById('capturePhotoBtn');
 const closeCameraBtn = document.getElementById('closeCameraBtn');
-const uploadFileBtn = document.getElementById('uploadFileBtn');
+const cameraBtn = document.getElementById('cameraBtn');
+const galleryBtn = document.getElementById('galleryBtn');
 const uploadPhotoInput = document.getElementById('uploadPhotoInput');
 const attendanceMsg = document.getElementById('attendanceMsg');
 const tableBody = document.getElementById('tableBody');
@@ -31,6 +32,7 @@ const clearFilterBtn = document.getElementById('clearFilterBtn');
 const exportPdfBtn = document.getElementById('exportPdfBtn');
 const exportFilteredPdfBtn = document.getElementById('exportFilteredPdfBtn');
 const darkModeToggle = document.getElementById('darkModeToggle');
+const photoInfo = document.getElementById('photoInfo');
 
 // Helper Functions
 function updateClock() {
@@ -85,11 +87,18 @@ async function loadAttendanceData() {
       const img = document.createElement('img');
       img.src = rec.fotoMasuk;
       img.className = 'thumb-img';
-      img.title = 'Foto masuk';
+      img.title = 'Foto masuk - klik untuk perbesar';
       img.style.cursor = 'pointer';
       img.onclick = () => {
         const win = window.open();
-        win.document.write(`<img src="${rec.fotoMasuk}" style="max-width:100%; height:auto;">`);
+        win.document.write(`
+          <html>
+            <head><title>Foto Masuk - ${rec.nama}</title></head>
+            <body style="margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#000;">
+              <img src="${rec.fotoMasuk}" style="max-width:90%; max-height:90vh; object-fit:contain;">
+            </body>
+          </html>
+        `);
       };
       fotoMasukCell.appendChild(img);
     } else fotoMasukCell.innerText = '-';
@@ -100,11 +109,18 @@ async function loadAttendanceData() {
       const img = document.createElement('img');
       img.src = rec.fotoPulang;
       img.className = 'thumb-img';
-      img.title = 'Foto pulang';
+      img.title = 'Foto pulang - klik untuk perbesar';
       img.style.cursor = 'pointer';
       img.onclick = () => {
         const win = window.open();
-        win.document.write(`<img src="${rec.fotoPulang}" style="max-width:100%; height:auto;">`);
+        win.document.write(`
+          <html>
+            <head><title>Foto Pulang - ${rec.nama}</title></head>
+            <body style="margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#000;">
+              <img src="${rec.fotoPulang}" style="max-width:90%; max-height:90vh; object-fit:contain;">
+            </body>
+          </html>
+        `);
       };
       fotoPulangCell.appendChild(img);
     } else fotoPulangCell.innerText = '-';
@@ -120,6 +136,7 @@ async function loadAttendanceData() {
     delBtn.style.color = 'white';
     delBtn.style.fontSize = '12px';
     delBtn.style.marginRight = '5px';
+    delBtn.style.cursor = 'pointer';
     delBtn.onclick = async () => {
       if (confirm(`Hapus absensi ${rec.nama} tgl ${rec.tanggal}?`)) {
         await deleteAttendance(rec.id);
@@ -136,6 +153,7 @@ async function loadAttendanceData() {
     editBtn.style.borderRadius = '30px';
     editBtn.style.color = 'white';
     editBtn.style.fontSize = '12px';
+    editBtn.style.cursor = 'pointer';
     editBtn.onclick = async () => {
       const newName = prompt('Edit nama karyawan:', rec.nama);
       if (newName && newName.trim()) {
@@ -159,15 +177,17 @@ async function startCamera() {
     video.srcObject = stream;
     await video.play();
     cameraSection.style.display = 'block';
+    photoInfo.innerHTML = '<i class="fas fa-camera"></i> Kamera aktif, ambil foto untuk absensi';
   } catch (err) {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       mediaStream = stream;
       video.srcObject = stream;
       cameraSection.style.display = 'block';
+      photoInfo.innerHTML = '<i class="fas fa-camera"></i> Kamera aktif, ambil foto untuk absensi';
     } catch(e) {
-      alert('Tidak dapat mengakses kamera. Silakan upload foto alternatif.');
-      uploadPhotoInput.click();
+      alert('Tidak dapat mengakses kamera. Silakan gunakan opsi "Pilih dari Galeri"');
+      openGallery();
     }
   }
 }
@@ -185,30 +205,60 @@ function capturePhotoFromVideo() {
   canvas.width = video.videoWidth || 640;
   canvas.height = video.videoHeight || 480;
   canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-  const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
   capturedPhotoBase64 = dataUrl;
   photoPreview.src = dataUrl;
+  photoInfo.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981"></i> Foto berhasil diambil!';
   stopCamera();
   return dataUrl;
+}
+
+function openGallery() {
+  uploadPhotoInput.click();
 }
 
 function handleFileUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
+  
+  // Validasi tipe file
+  if (!file.type.match('image.*')) {
+    alert('Harap pilih file gambar (JPEG, PNG, dll)');
+    return;
+  }
+  
+  // Validasi ukuran file (max 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    alert('Ukuran file terlalu besar! Maksimal 5MB');
+    return;
+  }
+  
   const reader = new FileReader();
   reader.onload = (ev) => {
     capturedPhotoBase64 = ev.target.result;
     photoPreview.src = capturedPhotoBase64;
+    photoInfo.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981"></i> Foto berhasil diupload!';
     cameraSection.style.display = 'none';
     stopCamera();
     finalizeAttendance();
   };
+  reader.onerror = () => {
+    alert('Gagal membaca file');
+  };
   reader.readAsDataURL(file);
+}
+
+function resetAfterPhoto() {
+  capturedPhotoBase64 = null;
+  photoPreview.src = '';
+  photoInfo.innerHTML = '';
+  cameraSection.style.display = 'none';
+  if (mediaStream) stopCamera();
 }
 
 async function finalizeAttendance() {
   if (!capturedPhotoBase64) {
-    alert('Foto gagal diambil!');
+    alert('Foto belum diambil! Silakan ambil foto terlebih dahulu.');
     return;
   }
   
@@ -220,7 +270,7 @@ async function finalizeAttendance() {
     const existing = await getAttendanceByDateAndName(tanggal, nama);
     if (existing && existing.jamMasuk) {
       alert(`Anda sudah absen masuk hari ini pada jam ${existing.jamMasuk}`);
-      resetCameraState();
+      resetAfterPhoto();
       return;
     }
     
@@ -241,18 +291,18 @@ async function finalizeAttendance() {
     }, 3000);
     employeeNameInput.value = '';
     loadAttendanceData();
-    resetCameraState();
+    resetAfterPhoto();
   } 
   else if (currentAction === 'checkout') {
     const recordMasuk = await getAttendanceByDateAndName(tanggal, nama);
     if (!recordMasuk || !recordMasuk.jamMasuk) {
-      alert(`Tidak ditemukan absen masuk untuk ${nama} hari ini.`);
-      resetCameraState();
+      alert(`Tidak ditemukan absen masuk untuk ${nama} hari ini. Silakan lakukan absen masuk terlebih dahulu.`);
+      resetAfterPhoto();
       return;
     }
     if (recordMasuk.jamPulang) {
       alert('Anda sudah melakukan absen pulang hari ini!');
-      resetCameraState();
+      resetAfterPhoto();
       return;
     }
     
@@ -268,19 +318,13 @@ async function finalizeAttendance() {
     }, 3000);
     employeeNameInput.value = '';
     loadAttendanceData();
-    resetCameraState();
+    resetAfterPhoto();
   }
-}
-
-function resetCameraState() {
-  capturedPhotoBase64 = null;
-  photoPreview.src = '';
+  
   currentAction = null;
-  cameraSection.style.display = 'none';
-  if (mediaStream) stopCamera();
 }
 
-function requestPhotoAndAction(action) {
+function startAttendanceProcess(action) {
   const nama = employeeNameInput.value.trim();
   if (!nama) {
     alert('Nama karyawan harus diisi!');
@@ -290,30 +334,52 @@ function requestPhotoAndAction(action) {
   currentAction = action;
   capturedPhotoBase64 = null;
   photoPreview.src = '';
-  startCamera();
+  photoInfo.innerHTML = '';
+  
+  // Tampilkan dialog pilihan
+  const useCamera = confirm(`Apakah ingin menggunakan kamera?\n\n- OK: Buka kamera\n- Cancel: Pilih dari galeri`);
+  
+  if (useCamera) {
+    startCamera();
+  } else {
+    openGallery();
+  }
 }
 
 // Event Listeners
-checkinBtn.addEventListener('click', () => requestPhotoAndAction('checkin'));
-checkoutBtn.addEventListener('click', () => requestPhotoAndAction('checkout'));
+checkinBtn.addEventListener('click', () => startAttendanceProcess('checkin'));
+checkoutBtn.addEventListener('click', () => startAttendanceProcess('checkout'));
+
+cameraBtn.addEventListener('click', () => {
+  if (!currentAction) {
+    alert('Pilih tombol Absen Masuk atau Pulang terlebih dahulu!');
+    return;
+  }
+  startCamera();
+});
+
+galleryBtn.addEventListener('click', () => {
+  if (!currentAction) {
+    alert('Pilih tombol Absen Masuk atau Pulang terlebih dahulu!');
+    return;
+  }
+  openGallery();
+});
+
 capturePhotoBtn.addEventListener('click', () => {
   if (video.srcObject) {
     capturePhotoFromVideo();
     finalizeAttendance();
   }
 });
+
 closeCameraBtn.addEventListener('click', () => {
   stopCamera();
-  resetCameraState();
+  resetAfterPhoto();
 });
-uploadFileBtn.addEventListener('click', () => {
-  if (!currentAction) {
-    alert('Pilih tombol Absen Masuk atau Pulang terlebih dahulu!');
-    return;
-  }
-  uploadPhotoInput.click();
-});
+
 uploadPhotoInput.addEventListener('change', handleFileUpload);
+
 filterDate.addEventListener('change', () => loadAttendanceData());
 clearFilterBtn.addEventListener('click', () => {
   filterDate.value = '';
