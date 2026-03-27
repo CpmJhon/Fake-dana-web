@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Absensi Karyawan | FaceCheck In/Out</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/idb@8.0.0/build/umd.js"></script>
+</head>
+<body>
+<div class="container">
+  <div class="top-bar">
+    <h1><i class="fas fa-fingerprint"></i> FaceCheck Attendance</h1>
+    <div class="badge-warning"><i class="fas fa-database"></i> Data hanya tersimpan di browser ini (IndexedDB) · Hapus data browser = hilang</div>
+    <button id="darkModeToggle" class="btn-outline"><i class="fas fa-moon"></i> Dark Mode</button>
+  </div>
+
+  <!-- CARD ABSENSI -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+      <h3><i class="fas fa-calendar-check"></i> Absen Hari Ini</h3>
+      <div><span id="realTimeClock" style="font-weight: 500;"></span></div>
+    </div>
+    <div class="employee-section">
+      <div class="input-group">
+        <label>Nama Karyawan</label>
+        <input type="text" id="employeeName" placeholder="Masukkan nama lengkap" autocomplete="off">
+      </div>
+      <button id="checkinBtn" class="btn-primary"><i class="fas fa-sign-in-alt"></i> Absen Masuk + Foto</button>
+      <button id="checkoutBtn" class="btn-primary" style="background: linear-gradient(100deg, #ea580c, #c2410c);"><i class="fas fa-sign-out-alt"></i> Absen Pulang + Foto</button>
+    </div>
+
+    <!-- Kamera & Preview -->
+    <div class="camera-area" id="cameraSection" style="display: none;">
+      <div class="flex-cam">
+        <div style="flex:1; text-align: center;">
+          <video id="video" autoplay playsinline muted style="width:100%; max-width:300px; border-radius: 24px;"></video>
+          <div style="margin-top: 12px;">
+            <button id="capturePhotoBtn" class="btn-primary"><i class="fas fa-camera"></i> Ambil Foto</button>
+            <button id="closeCameraBtn" class="btn-outline"><i class="fas fa-times"></i> Tutup</button>
+          </div>
+        </div>
+        <div style="flex:1; text-align: center;">
+          <p>Preview Foto</p>
+          <img id="photoPreview" class="photo-preview" style="width:150px; height:150px; object-fit:cover; background:#ddd;" alt="Preview">
+        </div>
+      </div>
+    </div>
+    <div id="uploadArea" style="margin-top: 12px;">
+      <input type="file" id="uploadPhotoInput" accept="image/*" capture="environment" style="display:none;">
+      <button id="uploadFileBtn" class="btn-outline"><i class="fas fa-upload"></i> Upload Foto (alternatif)</button>
+    </div>
+    <div id="attendanceMsg" style="margin-top: 16px; font-weight: 500;"></div>
+  </div>
+
+  <!-- Filter & export -->
+  <div class="card">
+    <div class="filter-row">
+      <div class="input-group" style="margin:0">
+        <label>Filter Tanggal</label>
+        <input type="date" id="filterDate">
+      </div>
+      <button id="clearFilterBtn" class="btn-outline"><i class="fas fa-eraser"></i> Reset Filter</button>
+      <button id="exportPdfBtn" class="btn-primary"><i class="fas fa-file-pdf"></i> Download PDF Laporan</button>
+      <button id="exportFilteredPdfBtn" class="btn-outline"><i class="fas fa-filter"></i> PDF (Filtered)</button>
+    </div>
+    <div class="table-wrapper">
+      <table id="attendanceTable">
+        <thead>
+          <tr><th>Nama</th><th>Tanggal</th><th>Jam Masuk</th><th>Jam Pulang</th><th>Durasi</th><th>Foto Masuk</th><th>Foto Pulang</th><th style="width:80px">Aksi</th></tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="8" style="text-align:center">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="db.js"></script>
+<script type="module" src="pdf.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
