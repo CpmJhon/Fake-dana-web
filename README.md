@@ -195,7 +195,7 @@ absensi.jhonproduction.com
 # 📸 Preview UI
 
 <p align="center">
-  <img src="https://via.placeholder.com/900x450/020617/38bdf8?text=FaceCheck+UI+Preview" />
+  <img src="[https://via.placeholder.com/900x450/020617/38bdf8?text=FaceCheck+UI+Preview](https://n.uguu.se/bRvTtKbg.jpg)" />
 </p>
 
 ---
