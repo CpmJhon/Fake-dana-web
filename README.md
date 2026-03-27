@@ -171,7 +171,7 @@ git push -u origin main
 Website kamu akan live di:
 
 ```
-[https://username.github.io/facecheck-attendance/](https://github.com/CpmJhon/Absen-Karyawan-Web.git)
+[https://github.com/CpmJhon/Absen-Karyawan-Web.git]
 ```
 
 ---
